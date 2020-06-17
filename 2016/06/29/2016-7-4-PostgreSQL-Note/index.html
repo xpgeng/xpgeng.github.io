@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="PostgreSQL 学习笔记"><meta name="keywords" content="postgresql"><meta name="author" content="xpgeng"><meta name="copyright" content="xpgeng"><title>PostgreSQL 学习笔记 | XP's blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  }
+} </script><meta name="generator" content="Hexo 4.2.1"></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="Toggle article">Toggle site</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#安装并创建database"><span class="toc-number">2.</span> <span class="toc-text">安装并创建database</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#psycopg2"><span class="toc-number">3.</span> <span class="toc-text">psycopg2</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PostgreSQL-基本语法"><span class="toc-number">4.</span> <span class="toc-text">PostgreSQL 基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#常用命令"><span class="toc-number">4.1.</span> <span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#写入JSON"><span class="toc-number">4.2.</span> <span class="toc-text">写入JSON</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">5.</span> <span class="toc-text">References</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="/img/avatar.png"></div><div class="author-info__name text-center">xpgeng</div><div class="author-info__description text-center"></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">Articles</span><span class="pull-right">5</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">Tags</span><span class="pull-right">4</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">Categories</span><span class="pull-right">4</span></a></div></div></div><div id="content-outer"><div class="no-bg" id="top-container"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">XP's blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a></span><span class="pull-right"></span></div><div id="post-info"><div id="post-title">PostgreSQL 学习笔记</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2016-06-29</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/%E7%AC%94%E8%AE%B0/">笔记</a></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><ul>
+<li><p>知识图谱学习小组Week3的重点就是学习使用PostgreSQL+JSON, 作业是储存自己的W3C邮件JSON. 所以边做作业, 边记录自己整个的学习过程, 一是及时记录自己遇到的问题方便回顾, 二是希望过程可以复用, 帮助其他人少走些弯路.</p>
+</li>
+<li><p>具体关于为什么要选择PostgreSQL, 可以看看知识图谱学习小组的<a href="https://github.com/memect/kg-beijing/wiki/%E7%AC%AC%E4%B8%80%E6%9C%9Fw3%EF%BC%9A%E7%9F%A5%E8%AF%86%E5%AD%98%E5%82%A8" target="_blank" rel="noopener">wiki</a></p>
+</li>
+<li><p><a href="https://functionwhatwhat.com/json-in-postgresql/" target="_blank" rel="noopener">Why JSON in PostgreSQL is Awesome</a></p>
+</li>
+</ul>
+<h2 id="安装并创建database"><a href="#安装并创建database" class="headerlink" title="安装并创建database"></a>安装并创建database</h2><ul>
+<li><p>系统为Mac OS, 虽然在Download里找到了安装方法, 可是在官方文档的Installation里竟然没有给出具体的Mac系统下的安装方法. 表示不解. 难道大家上来不是先看官网文档?</p>
+<pre><code>$ brew update; brew install postgres</code></pre></li>
+</ul>
+<ul>
+<li><p>初始化</p>
+<pre><code>$ initdb -D /usr/local/pgsql/data</code></pre></li>
+</ul>
+<ul>
+<li><p>启动Server</p>
+<pre><code>$ pg_ctl -D /usr/local/pgsql/data -l logfile start</code></pre></li>
+</ul>
+<ul>
+<li><p>创建database</p>
+<pre><code>$ createdb mydb</code></pre></li>
+<li><p>删除database</p>
+<pre><code>$ dropdb mydb</code></pre></li>
+<li><p>打开Database</p>
+<pre><code>$ psql mydb</code></pre></li>
+<li><p>关闭Server</p>
+<pre><code>$ kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</code></pre></li>
+</ul>
+<p>每次启动关闭Server很麻烦, 可以把写个alias方便操作.</p>
+<ul>
+<li><p>更简单的方法是直接下载<a href="http://postgresapp.com/" target="_blank" rel="noopener">PostgreSQL.app</a>, 像安装应用一样, 启动和关闭server就是打开或关闭应用, 同时在<code>~/.bash_profile</code>中添加如下代码来设置PATH, 即可进行命令行交互.</p>
+<pre><code>export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin</code></pre></li>
+</ul>
+<h2 id="psycopg2"><a href="#psycopg2" class="headerlink" title="psycopg2"></a>psycopg2</h2><ul>
+<li><p>安装psycopg2</p>
+<pre><code>$ pip install pscopg2</code></pre><ul>
+<li><p>这里遇到了一点小坑:pscopg是依赖于PostgreSQL的, 所以只有在PostgreSQL装好后才可以安装.</p>
+</li>
+<li><p>在调用过程中出现了如下错误</p>
+<blockquote>
+<p>Library not loaded: libssl.1.0.0.dylib<br>Referenced from: /Users/xpgeng/anaconda/lib/python2.7/site-packages/psycopg2/_psycopg.so<br>Reason: image not found</p>
+</blockquote>
+</li>
+<li><p>原因是不能加载<code>libssl.1.0.0.dylib</code>, stackflow上有相关的答案</p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/32978365/how-do-i-run-psycopg2-on-el-capitan-without-hitting-a-libssl-error" target="_blank" rel="noopener">How do I run psycopg2 on El Capitan without hitting a libssl error</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/27264574/import-psycopg2-library-not-loaded-libssl-1-0-0-dylib" target="_blank" rel="noopener">import psycopg2 Library not loaded: libssl.1.0.0.dylib</a></p>
+</li>
+<li><p>但是第一个我使用了不好用, 方法就是建立<code>libssl.1.0.0.dylib</code>的symlink. 于是我用了第二个方法, 在<code>~/.bash_profile</code>中添加如下代码.</p>
+<pre><code>export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PATH</code></pre></li>
+<li><p>Done!</p>
+</li>
+</ul>
+</li>
+<li><p><a href="http://initd.org/psycopg/docs/" target="_blank" rel="noopener">Basic Module usage</a></p>
+<ul>
+<li>如果你熟悉python的sqlite3, 想必再看psycopg2会很容易, 由于段老师已经非常详细的介绍了用法, 这里就不一一说明,具体请看<a href="https://github.com/memect/kg-beijing/tree/master/KG-PostgreSQL/KG-PostgreSQL" target="_blank" rel="noopener">这里</a>.</li>
+<li>不过有些地方还想强调一下.<ul>
+<li><code>conn.commit()</code>: 修改数据库后一定要记得提交…</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="PostgreSQL-基本语法"><a href="#PostgreSQL-基本语法" class="headerlink" title="PostgreSQL 基本语法"></a>PostgreSQL 基本语法</h2><h3 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h3><ul>
+<li>查看数据库列表: <code>user=#\l</code></li>
+<li>进入数据库: <code>user=#\c databasename</code></li>
+<li>查看数据库表结构: <code>user=#\d databasename</code></li>
+<li>退出: <code>user=#\q</code></li>
+</ul>
+<h3 id="写入JSON"><a href="#写入JSON" class="headerlink" title="写入JSON"></a>写入JSON</h3><ul>
+<li><p>读取+ 创建TABLE</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> psycopg2</span><br><span class="line"><span class="keyword">import</span> psycopg2.extras  </span><br><span class="line">    </span><br><span class="line">    <span class="comment"># Read data</span></span><br><span class="line">    data = []</span><br><span class="line"><span class="keyword">with</span> open(<span class="string">'W3C_data.json'</span>, <span class="string">'r'</span>) <span class="keyword">as</span> f:</span><br><span class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">        data.append(json.loads(line, encoding=<span class="string">'utf-8'</span>))</span><br><span class="line">f.close()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># CREATE TABLE</span></span><br><span class="line">conn = psycopg2.connect(<span class="string">"dbname=W3C user=xpgeng"</span>)</span><br><span class="line">cursor = conn.cursor()</span><br><span class="line">cursor.execute(<span class="string">'''</span></span><br><span class="line"><span class="string">    CREATE TABLE IF NOT EXISTS</span></span><br><span class="line"><span class="string">    W3C(id serial primary key, data jsonb);</span></span><br><span class="line"><span class="string">    '''</span>)</span><br></pre></td></tr></table></figure></li>
+<li><p>写入数据. 这里从我遇到的坑入手写下如何写入JSON数据.</p>
+<ul>
+<li><p>直接将读取的字典写入到数据库失败</p>
+</li>
+<li><p><code>str()</code>后出现如下问题</p>
+<pre><code>psycopg2.DataError: invalid input syntax for type json  
+DETAIL:  Token &quot;u&quot; is invalid.  
+CONTEXT:  JSON data, line 1: {u... </code></pre></li>
+<li><p>我以为是编码的问题, 于是在读取JSON数据的时候加了 <code>encoding=&quot;utf-8&quot;</code>, 还是不行.</p>
+</li>
+<li><p>Google 之后发现一个日文的<a href="http://symfoware.blog68.fc2.com/blog-entry-1258.html" target="_blank" rel="noopener">答案</a>. 他使用了psycopg2.extras这个模块的method:Json. 于是采用之. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cursor.execute(&#39;&#39;&#39;</span><br><span class="line">    INSERT INTO W3C (data) VALUES (%s);</span><br><span class="line">    &#39;&#39;&#39;, [psycopg2.extras.Json(item)])</span><br></pre></td></tr></table></figure></li>
+<li><p>注意: <code>[]</code>很重要, 最开始受python语法的影响, 想当然的忘记了加<code>[]</code>, 走了弯路…</p>
+</li>
+<li><p>Done!</p>
+</li>
+</ul>
+</li>
+<li><p>Query.</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM json_test WHERE data #&gt; &#39;&#123;b,c&#125;&#39; &#x3D; &#39;&quot;d&quot;&#39;;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>这里只写了一个, 针对如下情况:</p>
+<blockquote>
+<p>{“a”: 1, “b”: {“c”: “d”, “e”: true}}</p>
+</blockquote>
+</li>
+<li><p>通过这个语句我们就可以查询W3C中的信息.例如, headers-&gt;From = “Bobby Tung &lt;<a href="mailto:bobbytung@wanderer.tw">bobbytung@wanderer.tw</a>&gt;”</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">SELECT data FROM W3C </span><br><span class="line">WHERE data #&gt; &#39;&#123;headers, From&#125;&#39; &#x3D; &#39;&quot;Bobby Tung &lt;bobbytung@wanderer.tw&gt;&quot;&#39;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>还有很多姿势, 由于<a href="http://schinckel.net/2014/05/25/querying-json-in-postgres/" target="_blank" rel="noopener">Schinckel写的教程</a>已经非常完整, 大家可以继续深入学习.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><p>PostgreSQL官方文档(这官方文档…呵呵)</p>
+<ul>
+<li><a href="https://www.postgresql.org/download/macosx/" target="_blank" rel="noopener">https://www.postgresql.org/download/macosx/</a></li>
+<li><a href="https://www.postgresql.org/docs/9.5/static/index.html" target="_blank" rel="noopener">PostgreSql Official Documentation</a></li>
+<li><a href="https://www.postgresql.org/download/macosx/" target="_blank" rel="noopener">Install PostgeSQL on Mac OSX</a></li>
+<li><a href="http://postgresapp.com/documentation/gui-tools.html" target="_blank" rel="noopener">GUI Tools of PostgreSQL.app</a></li>
+<li><a href="https://www.postgresql.org/docs/current/static/datatype-json.html" target="_blank" rel="noopener">PostgreSql Official Documentation–8.14. JSON Types</a></li>
+<li><a href="https://www.postgresql.org/docs/current/static/functions-json.html" target="_blank" rel="noopener">PostgreSql Official Documentation–9.15. JSON Functions and Operators</a></li>
+</ul>
+</li>
+<li><p>psysopg2</p>
+<ul>
+<li><a href="http://initd.org/psycopg/docs/extras.html" target="_blank" rel="noopener">psycopg2.extras</a><ul>
+<li>Very Useful!! </li>
+</ul>
+</li>
+<li><a href="http://initd.org/psycopg/docs/faq.html" target="_blank" rel="noopener">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li><p><a href="http://schinckel.net/2014/05/25/querying-json-in-postgres/" target="_blank" rel="noopener">Querying JSON in Postgres</a></p>
+<ul>
+<li>大部分关于如何querying的语法, 代码都来自于这篇.</li>
+<li>Schinchel 很厉害?</li>
+</ul>
+</li>
+<li><p><a href="http://chenxiaoyu.org/2014/07/25/postgresql-json.html" target="_blank" rel="noopener">PostgreSQL JSON 数据类型–Author: Smallfish</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/21740359/python-mysqldb-typeerror-not-all-arguments-converted-during-string-formatting" target="_blank" rel="noopener">http://stackoverflow.com/questions/21740359/python-mysqldb-typeerror-not-all-arguments-converted-during-string-formatting</a></p>
+</li>
+<li><p><a href="http://symfoware.blog68.fc2.com/blog-entry-1258.html" target="_blank" rel="noopener">http://symfoware.blog68.fc2.com/blog-entry-1258.html</a></p>
+</li>
+<li><p><a href="http://wiki.zoomquiet.io/pythonic/PsycopgJson" target="_blank" rel="noopener">有Python的地方, 就有大妈!!!</a></p>
+<ul>
+<li>这是大妈写的关于psycopg2与json的文档.</li>
+</ul>
+</li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">xpgeng</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="http://xpgeng.com/2016/06/29/2016-7-4-PostgreSQL-Note/">http://xpgeng.com/2016/06/29/2016-7-4-PostgreSQL-Note/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/postgresql/">postgresql</a></div><nav id="pagination"><div class="prev-post pull-left"><a href="/2016/09/11/2016-9-11-Remote-note/"><i class="fa fa-chevron-left">  </i><span>Remote 读书笔记</span></a></div><div class="next-post pull-right"><a href="/2016/06/13/2016-6-13-install_Java/"><span>记录一次安装Java的入坑出坑之旅</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer><div class="layout" id="footer"><div class="copyright">&copy;2015 - 2020 By xpgeng</div><div class="framework-info"><span>Driven - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script></body></html>
